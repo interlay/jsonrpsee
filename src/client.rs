@@ -404,6 +404,7 @@ where
             Either::Right(Err(e)) => {
                 // TODO: https://github.com/paritytech/jsonrpsee/issues/67
                 log::error!("Client Error: {:?}", e);
+                panic!("JsonRPSee client errorL {:?}", e);
             }
         }
     }
