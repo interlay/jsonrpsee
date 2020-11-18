@@ -25,7 +25,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 use crate::common::{self, JsonValue};
-use crate::raw::{client::RawClientEvent, RawClient, RawClientRequestId};
+use crate::raw::{client::{RawClientEvent, RawClientError}, RawClient, RawClientRequestId};
 use crate::transport::TransportClient;
 
 use futures::{
@@ -404,7 +404,9 @@ where
             Either::Right(Err(e)) => {
                 // TODO: https://github.com/paritytech/jsonrpsee/issues/67
                 log::error!("Client Error: {:?}", e);
-                panic!("JsonRPSee client errorL {:?}", e);
+                if let RawClientError::Inner(_) = e {
+                    panic!("Fatal JsonRPSee client error: {:?}", e);
+                }
             }
         }
     }
