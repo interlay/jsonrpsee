@@ -178,6 +178,7 @@ impl WsTransportClient {
             Some(port) => format!("{}:{}", host, port),
             None => host.to_string(),
         };
+        let path = url.path();
 
         let mut error = None;
 
@@ -186,7 +187,11 @@ impl WsTransportClient {
             .await
             .map_err(WsNewDnsError::ResolutionFailed)?
         {
-            match Self::builder(url, &target, host, mode).build().await {
+            match Self::builder(url, &target, host, mode)
+                .with_url(path)
+                .build()
+                .await
+            {
                 Ok(ws_raw_client) => return Ok(ws_raw_client),
                 Err(err) => error = Some(err),
             }
