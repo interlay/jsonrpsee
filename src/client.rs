@@ -405,7 +405,8 @@ where
                 // TODO: https://github.com/paritytech/jsonrpsee/issues/67
                 log::error!("Client Error: {:?}", e);
                 if let RawClientError::Inner(_) = e {
-                    panic!("Fatal JsonRPSee client error: {:?}", e);
+                    log::error!("Fatal JsonRPSee client error: {:?}", e);
+                    std::process::exit(-1);
                 }
             }
         }
