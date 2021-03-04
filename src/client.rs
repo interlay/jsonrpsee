@@ -366,7 +366,8 @@ where
                     let _ = send_back.send(Err(RequestError::Request(err)));
                 } else {
                     // TODO: what's a good limit here? way more tricky than it looks
-                    let (notifs_tx, notifs_rx) = mpsc::channel(4);
+                    // with a limit of 4 we seem to be running into freezes, so set it higher:
+                    let (notifs_tx, notifs_rx) = mpsc::channel(128);
                     if send_back.send(Ok(notifs_rx)).is_ok() {
                         active_subscriptions.insert(request_id, (notifs_tx, unsubscribe));
                     } else {
