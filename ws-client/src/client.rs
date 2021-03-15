@@ -178,6 +178,7 @@ impl Client for WsClient {
 		let params = params.into();
 		log::trace!("[frontend]: send request: method={:?}, params={:?}", method, params);
 		let (send_back_tx, send_back_rx) = oneshot::channel();
+		let send_back_rx = send_back_rx.fuse();
 
 		self.to_back
 			.clone()
@@ -246,6 +247,7 @@ impl SubscriptionClient for WsClient {
 			}))
 			.await
 			.map_err(Error::Internal)?;
+		let send_back_rx = send_back_rx.fuse();
 
 		let (notifs_rx, id) = match send_back_rx.await {
 			Ok(Ok(val)) => val,
@@ -255,6 +257,7 @@ impl SubscriptionClient for WsClient {
 				return Err(Error::TransportError(Box::new(err)));
 			}
 		};
+		let notifs_rx = notifs_rx.fuse();
 
 		Ok(Subscription { to_back: self.to_back.clone(), notifs_rx, marker: PhantomData, id })
 	}
@@ -264,10 +267,12 @@ impl SubscriptionClient for WsClient {
 async fn background_task(
 	mut sender: jsonrpc_transport::Sender,
 	receiver: jsonrpc_transport::Receiver,
-	mut frontend: mpsc::Receiver<FrontToBack>,
+	frontend: mpsc::Receiver<FrontToBack>,
 	max_notifs_per_subscription: usize,
 	max_concurrent_requests: usize,
 ) -> Result<(), Error> {
+	let mut frontend = frontend.fuse();
+
 	let mut manager = RequestManager::new(max_concurrent_requests);
 
 	let backend_event = futures::stream::unfold(receiver, |mut receiver| async {
